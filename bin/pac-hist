@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+#-------------#
+# SCRIPT NAME #
+#-------------#
+_name_=${0##*/}
+_version_="16-12-2019"
+
+#------------------#
+# SCRIPT VARIABLES #
+#------------------#
+declare -A ACTION=( [install]="installed" [remove]="removed" [reinstall]="reinstalled" [upgrade]="upgraded" [downgrade]="downgraded" )
+_LOG_="/var/log/pacman.log"
+
+#-----------#
+# ERROR MSG #
+#-----------#
+error(){ printf "%s: %s\n" "${_name_^}" "$@" >&2 && exit 1;}
+
+#------------------#
+# CHECK FOR ACTION #
+#------------------#
+_action_(){
+case ${_ACTION_^^} in
+    INSTALL|\
+    REMOVE|\
+    REINSTALL|\
+    UPGRADE|\
+    DOWNGRADE)
+        action=${ACTION[${_ACTION_,,}]}
+        ;;
+    * )
+        error "Invalid action '$_ACTION_'. Try '$_name_ -h' for more information"
+        ;;
+esac
+}
+
+#----------------#
+# CHECK FOR DATE #
+#----------------#
+_date_(){
+date="$_DATE_"
+(date -d "$date" +%Y-%m-%d\ %H:%M:%S &> /dev/null) && date=${date/ /T} || error "Invalid Date '$date'. Try '$_name_ -h' for more information"
+}
+
+#--------------------#
+# SEARCH FOR PACKAGE #
+#--------------------#
+_search_(){
+local pkg="$_SEARCH_"
+
+while read -ra line ; do
+    if [ "$action" -a "$date" ]; then
+        [ "$action" = "${line[2]}" ] && [[ ${line[0]} =~ $date ]] && [ "${line[3]}" = "$pkg" ] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    elif [ "$action" ]; then
+        [ "$action" = "${line[2]}" ] && [ "${line[3]}" = "$pkg" ] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    elif [ "$date" ]; then
+        [[ ${line[0]} =~ $date ]] && [[ ${line[2]} =~ (installed|removed|reinstalled|upgraded|downgraded) ]] && [ "${line[3]}" = "$pkg" ] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    else
+        [ "${line[3]}" = "$pkg" ] && [[ ${line[2]} =~ (installed|removed|reinstalled|upgraded|downgraded) ]] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    fi
+done < $_LOG_ | column -s "," -t
+}
+
+#---------------------#
+# LIST SEARCH RESOULT #
+#---------------------#
+_list_(){
+while read -ra line ; do
+    if [ "$action" -a "$date" ]; then
+        [ "$action" = "${line[2]}" ] && [[ ${line[0]} =~ $date ]]  && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    elif [ "$action" ]; then
+        [ "$action" = "${line[2]}" ] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    elif [ "$date" ]; then
+        [[ ${line[0]} =~ $date ]] && [[ ${line[2]} =~ (installed|removed|reinstalled|upgraded|downgraded) ]] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    else
+        [[ ${line[2]} =~ (installed|removed|reinstalled|upgraded|downgraded) ]] && printf "%s\n" "${line[0]} ${line[2]}, ${line[3]}, ${line[4]} ${line[5]} ${line[6]}"
+    fi
+done < $_LOG_ | column -s "," -t
+
+}
+
+#-------------#
+# HELP DIALOG #
+#-------------#
+_help_(){
+cat <<- HELP
+${_name_^^}($_version_) Pacman Log Viewer
+Usage: ${_name_} [OPTIONS] ...
+
+OPTIONS:
+ -a <ACTION>    Search for giving ACTION
+ -d <DATE>      Set Date and Time to search
+ -s <PKG>       Searh for Special Package
+ -l             List Search resoult
+ -h             Show this help dialog
+
+ACTIONS:
+ install; remove; reinstall; upgrade; downgrade
+
+DATE:
+ Date Syntax: YYYY-MM-DD HH:MM:SS
+HELP
+exit 0
+}
+
+#---------------#
+# MAIN FUNCTION #
+#---------------#
+_main_(){
+while getopts ":a:d:s:lh" OPT; do
+    case "$OPT" in
+        a )
+            _ACTION_="$OPTARG"
+            ;;
+        d )
+            _DATE_="$OPTARG"
+            ;;
+        s )
+            _SEARCH_="$OPTARG"
+            ;;
+        l )
+            _LIST_=true
+            ;;
+        h )
+            _HELP_=true
+            ;;
+        : )
+            error "Option '-$OPTARG' Requires an argument. Try '$_name_ -h' for more information"
+            ;;
+        * )
+            error "Invalid option '-$OPTARG'. Try '$_name_ -h' for more information"
+            ;;
+    esac
+done
+}
+
+#-------------------#
+# RUN MAIN FUNCTION #
+#-------------------#
+_main_ "$@"
+
+#--------------------#
+# MANAGER USER INPUT #
+#--------------------#
+[ "$_HELP_" ]   && _help_   || true
+[ "$_ACTION_" ] && _action_ || true
+[ "$_DATE_" ]   && _date_   || true
+[ "$_SEARCH_" ] && _search_ || true
+[ "$_LIST_" ]   && _list_   || true
+
