@@ -4,7 +4,7 @@
 
 - [About](#about)
 - [Quick Start](#quick-start)
-- [Using Pac-hist](#using-zshing)
+- [Using Pac-hist](#using-pac-hist)
 - [Examples](#examples)
 - [TODO](#todo)
 

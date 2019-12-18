@@ -143,6 +143,7 @@ _main_ "$@"
 #--------------------#
 # MANAGER USER INPUT #
 #--------------------#
+[ "$_LIST_" -a "$_SEARCH_" ] && error "only one operation may be used at a time. Try '$_name_ -h' for more information"
 [ "$_HELP_" ]   && _help_   || true
 [ "$_ACTION_" ] && _action_ || true
 [ "$_DATE_" ]   && _date_   || true
