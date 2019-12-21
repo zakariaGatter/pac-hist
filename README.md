@@ -79,17 +79,17 @@ DATE:
 
 * Search for package
 
-    `pac-hist -s socklog-void`
+    `pac-hist -s git`
 
 * Search for package with action
 
-    `pac-hist -a install -s socklog-void`
+    `pac-hist -a install -s git`
 
 * Search for package with action and date
 
-    `pac-hist -a install -d "2019-10-21 13:38:00" -s socklog-void`
+    `pac-hist -a install -d "2019-10-21 13:38:00" -s git`
 
 ## TODO
 [Pac-hist] is a work in progress, so any ideas and patches are appreciated.
 
-[Pac-hist]:http://gitlab.com/zakariagatter/pac-hist
+[Pac-hist]:http://github.com/zakariagatter/pac-hist
